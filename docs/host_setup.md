@@ -6,67 +6,6 @@
 2. [Docker](https://docs.docker.com/engine/installation/)
 3. [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Preparation
-
-Edit your `/etc/hosts` file with the following commands:
-```bash
-# First log in as root
-sudo su -
-
-cat <<- 'EOT' >> /etc/hosts
-# Redmine
-0.0.0.0 redmine.local
-EOT
-
-# Don't forget to exit root:
-exit
-```
-
-Edit your `~/.bashrc` file with the following command:
-```bash
-cat <<- 'EOT' >> ~/.bashrc
-export HOST_USER_UID=`id -u`
-export HOST_USER_GID=`id -g`
-
-alias docker-exec='docker exec -it -u `id -u`:`id -g`'
-alias docker-tail='docker logs -f --tail=100'
-EOT
-```
-
-Source the new `~/.bashrc` file:
-```bash
-source ~/.bashrc
-```
-
-Create and start the nginx reverse proxy:
-``` bash
-docker run                                    \
-  --name nginx_reverse_proxy -d -p 80:80      \
-  -v /var/run/docker.sock:/tmp/docker.sock:ro \
-  jwilder/nginx-proxy
-```
-
-Clone the repository:
-``` bash
-# Using HTTPS (not recommended, please use the SSH method below):
-git clone https://github.com/marius-balteanu/redmine_docker.git
-
-# Using SSH:
-git clone git@github.com:marius-balteanu/redmine_docker.git
-```
-
-Go inside the `redmine_docker/project` directory and clone the redmine repository:
-```bash
-cd redmine_docker/project
-
-# Using HTTPS (not recommended, please use the SSH method below):
-git clone https://github.com/redmine/redmine.git
-
-# Using SSH
-git clone git@github.com:redmine/redmine.git
-```
-
-
 ## Initial Setup
 
 1. Go inside the `project` directory from te repository root:
@@ -74,32 +13,7 @@ git clone git@github.com:redmine/redmine.git
     cd project
     ```
 
-2. You need to create the configuration files as following:
-    * `environment/web.env`
-    * `secrets/mysql_secrets.env`
-    * `secrets/web_secrets.env`
-    * `settings/web_settings.env`
-
-    All of them have a corresponding `.sample` file in the same directory in which
-    you can find more information about what each must contain. If you want the
-    default values then simply copy them with the following commands:
-    ```bash
-    \cp -f ./environment/web.env.sample       ./environment/web.env
-    \cp -f ./secrets/mysql_secrets.env.sample ./secrets/mysql_secrets.env
-    \cp -f ./secrets/web_secrets.env.sample   ./secrets/web_secrets.env
-    \cp -f ./settings/web_settings.env.sample ./settings/web_settings.env
-    ```
-
-2. Copy the files in `project/config` to their right location:
-    ```bash
-    \cp -f ./config/Gemfile.local             ./redmine/
-    \cp -f ./config/additional_environment.rb ./redmine/config/
-    \cp -f ./config/database.yml              ./redmine/config/
-    \cp -f ./config/puma.rb                   ./redmine/tmp/
-    \cp -f ./config/secret_token.rb           ./redmine/config/initializers
-    ```
-
-3. Build the containers:
+2. Build the containers:
     ```bash
     # First you build the production containers:
     docker-compose -f docker/build/build.yml build
@@ -109,12 +23,12 @@ git clone git@github.com:redmine/redmine.git
     docker-compose -f docker/build/build-dev.yml build
     ```
 
-4. Make sure the reverse proxy is started:
+3. Make sure the reverse proxy is started:
     ```bash
     docker start nginx_reverse_proxy
     ```
 
-5. Start the containers:
+4. Start the containers:
 
     For Development execute just this command below:
     ```bash
@@ -152,23 +66,23 @@ git clone git@github.com:redmine/redmine.git
     * `DEPLOYMENT_ENV=development`
     * `DEPLOYMENT_ENV=production`
 
-6. Connect the frontend network to the nginx reverse proxy:
+5. Connect the frontend network to the nginx reverse proxy:
     ```bash
     docker network connect redmine_frontend_network nginx_reverse_proxy
     ```
 
-7. Initialize the database:
+6. Initialize the database:
     ```bash
     docker-compose -p redmine exec web \
       /entry bundle exec rake db:create db:migrate
     ```
 
-8. Restart the web service:
+7. Restart the web service:
     ```bash
     docker-compose -p redmine restart web
     ```
 
-9. Visit the application url in a browser:
+8. Visit the application url in a browser:
     ```bash
     http://redmine.local/
     ```
